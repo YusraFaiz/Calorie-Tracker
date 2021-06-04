@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+    <title>Document</title>
+</head>
+<body>
+    <div class="container bg-light">
+        <div class="row">
+            <div class="col-md-12">
+                <nav class="navbar navbar-dark bg-primary">
+                    <span class="navbar-brand">Calorie Tracker</span>
+                </nav>
+            </div>
+        </div>
+        <br><br>
+        <h4> Calorie Goal</h4>
+        <br>
+        <div class="row">
+            <div class="col-md-9 offset-1">
+                <div class="progress">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="0"></div>
+                </div>
+
+            </div>
+        </div>
+        <br><br>
+        <div class="row">
+            <div class="col-md-12">
+                <form method="POST">
+                    <div class="form-group row">
+                    {% csrf_token %}
+                    <label class="col-md-3">
+                       <b>SELECT FOOD TO ADD</b>
+                    </label>
+                    <select class="col-md-6 form-control" name="food_consumed" id="food_consumed">
+                        {% for food in foods %}
+                        <option value="{{food.name}}">{{food.name}}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-success" type="submit">Add</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div>
+                    <h4>Today's Consumtion</h4>
+                </div>
+                <table id="table" class="table table-stripped bg-dark text-white">
+                    <tr class="bg-primary text-white"> 
+                        <th>Foods Item</th>
+                        <th>Carbs(gm)</th>
+                        <th>Proteins(gm)</th>
+                        <th>Fats(gm)</th>
+                        <th>Calories(kcal)</th>
+                        <th>Remove Item</th>
+                        
+                    </tr>
+                        {% for c in consumed_food %}
+                        <tr>
+                            <td>{{c.food_consumed.name}}</td>
+                            <td>{{c.food_consumed.cabs}}</td>
+                            <td>{{c.food_consumed.protien}}</td>
+                            <td>{{c.food_consumed.fats}}</td>
+                            <td> {{c.food_consumed.calories}}</td>
+                            <td><a class="btn btn-danger" href="{% url 'delete' c.id %}">Remove</a></td>
+
+
+                        </tr>
+                        {% endfor %}
+                        <tr>
+                            <td id="name"><b>Total</b></td>
+                            <td id="totalCarbs"><b></b></td>
+                            <td id="totalProtien"><b></b></td>
+                            <td id="totalFats"><b></b></td>
+                            <td id="totalCalories"><b></b></td>
+                        </tr>
+
+                </table>
+            </div>
+            <div class="col-md-5 offset-1">
+                <div class="">
+                    <h4>Today's Breakdown</h4>
+
+                </div>
+                <div class="card-header text-white bg-primary">
+                    <h4>Macronutrients Breakdown</h4>
+                </div>
+                <div class="col-md-12">
+                    <canvas id="myChart" width="400" height="400"></canvas>
+
+                </div>
+
+            </div>
+
+
+
+        </div>
+    </div>
+
+    
+</body>
+<script>
+
+    var table = document.getElementById("table");
+    var cabs=0,protien=0,fats=0,calories=0;
+
+    for(var i=1;i<table.rows.length-1;i++){
+        console.log(table.rows[i].cells[1].innerHTML);
+
+        cabs +=parseFloat(table.rows[i].cells[1].innerHTML);
+        cabs = Math.round(cabs);
+
+        protien +=parseFloat(table.rows[i].cells[2].innerHTML);
+        protien = Math.round(protien);
+
+        fats +=parseFloat(table.rows[i].cells[3].innerHTML);
+        fats = Math.round(fats);
+
+        calories +=parseFloat(table.rows[i].cells[4].innerHTML);
+        calories =Math.round(calories);
+    }
+    console.log(cabs);
+
+    document.getElementById("totalCarbs").innerHTML ='<b>'+ cabs+'(gm)</b>';
+    document.getElementById("totalProtien").innerHTML ='<b>'+ protien+'(gm)</b>';
+    document.getElementById("totalFats").innerHTML ='<b>'+ fats+'(gm)</b>';
+    document.getElementById("totalCalories").innerHTML = '<b>'+calories+'(Kcal)</b>';
+    
+    var calPer = (calories/2000)*100;
+    document.getElementsByClassName("progress-bar")[0].setAttribute("style","width:"+calPer+"%");
+
+    var total = cabs+protien+fats;
+    var carbsP = Math.round((cabs/total)*100);
+    var protienP = Math.round((protien/total)*100);
+    var fatsP = Math.round((fats/total)*100);
+
+
+
+
+
+
+
+
+    var ctx = document.getElementById('myChart').getContext('2d');
+var myChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Carbs '+carbsP+'%', 'Protien '+protienP+'%', 'Fats '+fatsP+'%'],
+        datasets: [{
+            label: '# of Votes',
+            data: [carbsP,protienP,fatsP],
+            backgroundColor: [
+                'rgba(140, 255, 26,1)',
+                'rgba(255, 77, 255,1)',
+                'rgba(64,175,178,1)',
+                
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+               
+            ],
+            borderWidth: 1
+        }]
+    },
+   
+    
+});
+
+</script>
+</html>
